@@ -426,6 +426,7 @@ def DAA_27(cpu): # 27 DAA
     cpu.F &= 0b01000000
     cpu.F |= flag
     t &= 0xFF
+    print(f"DAA: h: {cpu.f_h()}, c: {cpu.f_c()}, n: {cpu.f_n()}, {cpu.A:02X}, {t:02X}")
     cpu.A = t
     cpu.PC += 1
     cpu.PC &= 0xFFFF
@@ -2095,6 +2096,8 @@ def CALL_C4(cpu, v): # C4 CALL NZ,a16
 def PUSH_C5(cpu): # C5 PUSH BC
     cpu.mb.setitem((cpu.SP-1) & 0xFFFF, cpu.B) # High
     cpu.mb.setitem((cpu.SP-2) & 0xFFFF, cpu.C) # Low
+    print(f"PUSH BC Stack {(cpu.SP-1):04X} {cpu.B:04X}")
+    print(f"PUSH BC Stack {(cpu.SP-2):04X} {cpu.C:04X}")
     cpu.SP -= 2
     cpu.SP &= 0xFFFF
     cpu.PC += 1
@@ -2348,6 +2351,8 @@ def CALL_DC(cpu, v): # DC CALL C,a16
 
 def SBC_DE(cpu, v): # DE SBC A,d8
     t = cpu.A - v - cpu.f_c()
+    print("SBC A, d8")
+    print(f"d8: 0b{v:08b}")
     flag = 0b01000000
     flag += ((t & 0xFF) == 0) << FLAGZ
     flag += (((cpu.A & 0xF) - (v & 0xF) - cpu.f_c()) < 0) << FLAGH
@@ -2480,6 +2485,8 @@ def RST_EF(cpu): # EF RST 28H
 
 
 def LDH_F0(cpu, v): # F0 LDH A,(a8)
+    print(f"LDH A, (a8): {(v + 0xFF00):04X}")
+    print(f"LDH A, (a8): {(cpu.mb.getitem(v + 0xFF00)):08b}")
     cpu.A = cpu.mb.getitem(v + 0xFF00)
     cpu.PC += 2
     cpu.PC &= 0xFFFF
@@ -2513,6 +2520,8 @@ def DI_F3(cpu): # F3 DI
 def PUSH_F5(cpu): # F5 PUSH AF
     cpu.mb.setitem((cpu.SP-1) & 0xFFFF, cpu.A) # High
     cpu.mb.setitem((cpu.SP-2) & 0xFFFF, cpu.F & 0xF0) # Low
+    print(f"PUSH AF Stack {(cpu.SP-1):04X} {cpu.A:04X}")
+    print(f"PUSH AF Stack {(cpu.SP-2):04X} {cpu.F:04X}")
     cpu.SP -= 2
     cpu.SP &= 0xFFFF
     cpu.PC += 1
@@ -2566,6 +2575,8 @@ def LD_F9(cpu): # F9 LD SP,HL
 
 
 def LD_FA(cpu, v): # FA LD A,(a16)
+    print("LD A, (a16)")
+    print(f"a16: {v:4X}")
     cpu.A = cpu.mb.getitem(v)
     cpu.PC += 3
     cpu.PC &= 0xFFFF

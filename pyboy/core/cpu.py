@@ -11,6 +11,8 @@ from . import opcodes
 FLAGC, FLAGH, FLAGN, FLAGZ = range(4, 8)
 INTR_VBLANK, INTR_LCDC, INTR_TIMER, INTR_SERIAL, INTR_HIGHTOLOW = [1 << x for x in range(5)]
 
+COUNTS = 0
+
 logger = logging.getLogger(__name__)
 
 
@@ -204,4 +206,20 @@ class CPU:
 
         self.add_opcode_hit(opcode, 1)
 
-        return opcodes.execute_opcode(self, opcode)
+        v = opcodes.execute_opcode(self, opcode)
+        global COUNTS
+        COUNTS = COUNTS + 1
+        if COUNTS == 604156 and opcode == 0x0000:
+            COUNTS = 0
+            self.mb.setitem(0xFF44, 145)
+            self.mb.timer.reset()
+        # Registers { a: 0, f: Flags { z: true, n: true, h: true, c: false }, b: 251, c: 30, d: 0, e: 216, h: 11, l: 143, sp: 57331, pc: 1854 }
+        print(f"COUNTS: {COUNTS}")
+        print(f"OPCODE: 0x{opcode:04X}")
+        h = (self.HL & 0xFF00) >> 8
+        l = (self.HL & 0x00FF)
+        print(f"Registers {{ a: {self.A}, f: Flags {{ z: {str(self.f_z()).lower()}, n: {str(self.f_n()).lower()}, h: {str(self.f_h()).lower()}, c: {str(self.f_c()).lower()} }}, b: {self.B}, c: {self.C}, d: {self.D}, e: {self.E}, h: {h}, l: {l}, sp: {self.SP}, pc: {self.PC} }}, ime: {str(self.interrupt_master_enable).lower()}, is_halted: {str(self.halted).lower()}")
+        print(f"InterruptFlags: 0b{self.interrupts_flag_register:08b}")
+        print(f"InterruptEnables: 0b{self.interrupts_enabled_register:08b}")
+        # print(f"Timer: {{ div: {self.mb.timer.DIV}, div_tmp: {self.mb.timer.DIV_counter}, tima: {self.mb.timer.TIMA}, tima_tmp: {self.mb.timer.TIMA_counter}, tma: {self.mb.timer.TMA}, tac: 0b{self.mb.timer.TAC:08b} }}")
+        return v

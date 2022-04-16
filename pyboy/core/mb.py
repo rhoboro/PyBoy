@@ -199,7 +199,9 @@ class Motherboard:
             else:
                 return self.cartridge.getitem(i)
         elif 0x4000 <= i < 0x8000: # 16kB switchable ROM bank
-            return self.cartridge.getitem(i)
+            value = self.cartridge.getitem(i)
+            # print(f"Read Vram: {i:04X}, Data: {value}")
+            return value
         elif 0x8000 <= i < 0xA000: # 8kB Video RAM
             return self.lcd.VRAM[i - 0x8000]
         elif 0xA000 <= i < 0xC000: # 8kB switchable RAM bank
@@ -238,6 +240,7 @@ class Motherboard:
             elif i == 0xFF43:
                 return self.lcd.SCX
             elif i == 0xFF44:
+                # print(f"GET LY: {self.lcd.LY}")
                 return self.lcd.LY
             elif i == 0xFF45:
                 return self.lcd.LYC
@@ -274,6 +277,7 @@ class Motherboard:
             # Doesn't change the data. This is for MBC commands
             self.cartridge.setitem(i, value)
         elif 0x8000 <= i < 0xA000: # 8kB Video RAM
+            # print(f"Write Vram: {i:04X}, Data: {value}")
             self.lcd.VRAM[i - 0x8000] = value
             if i < 0x9800: # Is within tile data -- not tile maps
                 # Mask out the byte of the tile
@@ -281,6 +285,8 @@ class Motherboard:
         elif 0xA000 <= i < 0xC000: # 8kB switchable RAM bank
             self.cartridge.setitem(i, value)
         elif 0xC000 <= i < 0xE000: # 8kB Internal RAM
+            if i == 0xDD01:
+                print(f"DD01: {value}")
             self.ram.internal_ram0[i - 0xC000] = value
         elif 0xE000 <= i < 0xFE00: # Echo of 8kB Internal RAM
             self.setitem(i - 0x2000, value) # Redirect to internal RAM
@@ -292,6 +298,7 @@ class Motherboard:
             if i == 0xFF00:
                 self.ram.io_ports[i - 0xFF00] = self.interaction.pull(value)
             elif i == 0xFF01:
+                print(f"SB: {chr(value)}")
                 self.serialbuffer += chr(value)
                 self.ram.io_ports[i - 0xFF00] = value
             elif i == 0xFF04:
@@ -312,12 +319,12 @@ class Motherboard:
             elif i == 0xFF41:
                 self.lcd.set_stat(value)
             elif i == 0xFF42:
-                # print(f"SCY: {value}")
                 self.lcd.SCY = value
             elif i == 0xFF43:
                 # print(f"SCX: {value}")
                 self.lcd.SCX = value
             elif i == 0xFF44:
+                print(f"SET LY: {value}")
                 self.lcd.LY = value
             elif i == 0xFF45:
                 # print(f"LYC: {value}")
